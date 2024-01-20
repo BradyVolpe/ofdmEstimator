@@ -1,6 +1,12 @@
 import math
 
-# Constants
+# User-defined variables
+ds_occupied_spectrum = 192      # BW of OFDM ch in MHz
+ds_lower_band_edge = 678        # Start freq of OFDM Ch in MHz
+ds_avg_modulation_order = 12    # Modulation order in bits
+ds_subcarrier_spacing = 50      # Subcarrier spacking in kHz
+
+# Constants - you can obvously adjust these, but they are de-emphasized
 DS_SAMPLING_RATE = 204.8
 DS_CYCLIC_PREFIX = 512
 DS_NUM_PLC_SUBCARRIERS = 8
@@ -12,12 +18,6 @@ NCP_BITS_PER_MB = 48
 NCP_MODULATION_ORDER = 6
 NUM_SYMBOLS_PER_PROFILE = 1
 LDPC_FEC_CW = [16200, 14216, 1800, 168, 16]  # [CWSize, Infobits, Parity, BCH, CWheader]
-
-# User-defined variables
-ds_occupied_spectrum = 192
-ds_lower_band_edge = 678
-ds_avg_modulation_order = 12
-ds_subcarrier_spacing = 50
 
 # Derived calculations
 ds_modulated_subcarriers = (ds_occupied_spectrum - DS_GUARD_BAND - DS_EXCLUDED_BAND) * 1000 / ds_subcarrier_spacing
