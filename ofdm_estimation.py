@@ -1,68 +1,73 @@
 import math
 
-# User Definable Vars
-DSOccupiedSpectrum = 96
-DSLowerBandEdge = 678
-DSAvgModulationOrder = 12
-DSGuardBand = 2
-DSExcludedBand = 2
+def calculate_parameters(occupied_spectrum, lower_band_edge, avg_modulation_order, guard_band, excluded_band, subcarrier_spacing):
+    """
+    Calculate various OFDM parameters.
+    """
+    upper_band_edge = lower_band_edge + occupied_spectrum
+    num_fft_points = (sampling_rate * 1000) / subcarrier_spacing
+    symbol_period_usec = 1000 / subcarrier_spacing
+    cyclic_prefix_usec = cyclic_prefix / sampling_rate
+    actual_symbol_period_usec = symbol_period_usec + cyclic_prefix_usec
+    symbol_efficiency = 100 * symbol_period_usec / actual_symbol_period_usec
+    modulated_subcarriers = (occupied_spectrum - guard_band - excluded_band) * 1000 / subcarrier_spacing
 
-# Constants
-DSNumFFTBlocks = 1
-DSSamplingRate = 204.8
-DSSubcarrierSpacing = 50
-DSCyclicPrefix = 512
-DSWindowing = 128
-DSPilotDensity_M = 48
-DSExcludedSubcarriers = 20
-NCPModulationOrder = 6
-numSymbolsPerProfile = 1
-DSLDPC_FEC_CW = [16200, 14216, 1800, 168, 16] # [CWSize, Infobits, Parity, BCH, CWheader]
+    num_plc_subcarriers = 8 if subcarrier_spacing == 50 else 16
 
-def calculate_parameters():
-    DSUpperBandEdge = DSLowerBandEdge + DSOccupiedSpectrum
-    DSNumFFTPoints = (DSSamplingRate * 1000) / DSSubcarrierSpacing
-    DSSymbolPeriod_usec = 1000 / DSSubcarrierSpacing
-    DSCyclicPrefix_usec = DSCyclicPrefix / DSSamplingRate
-    DSActualSymbolPeriod_usec = DSSymbolPeriod_usec + DSCyclicPrefix_usec
-    DSSymbolEfficiency = 100 * DSSymbolPeriod_usec / DSActualSymbolPeriod_usec
-    DSModulatedSubcarriers = (DSOccupiedSpectrum - DSGuardBand - DSExcludedBand) * 1000 / DSSubcarrierSpacing
+    num_cont_pilots = min(max(8, math.ceil(pilot_density_m * occupied_spectrum / 190)), 120) + 8
+    num_scattered_pilots = math.ceil((modulated_subcarriers - num_plc_subcarriers) / 128)
+    effective_subcarriers = modulated_subcarriers - (excluded_subcarriers + num_plc_subcarriers * num_fft_blocks + num_cont_pilots + num_scattered_pilots)
 
-    DSNumPLCSubcarriers = 8 if DSSubcarrierSpacing == 50 else 16
+    return actual_symbol_period_usec, effective_subcarriers
 
-    DSNumContPilots = min(max(8, math.ceil(DSPilotDensity_M * DSOccupiedSpectrum / 190)), 120) + 8
-    DSNumScatteredPilots = math.ceil((DSModulatedSubcarriers - DSNumPLCSubcarriers) / 128)
-    DSEffectiveSubcarriers = DSModulatedSubcarriers - (DSExcludedSubcarriers + DSNumPLCSubcarriers * DSNumFFTBlocks + DSNumContPilots + DSNumScatteredPilots)
+def calculate_data_rate(actual_symbol_period_usec, effective_subcarriers, avg_modulation_order, occupied_spectrum):
+    """
+    Calculate the data rate of the OFDM channel.
+    """
+    ncp_bits_per_mb = 48
+    subcarriers_per_ncp_mb = ncp_bits_per_mb / ncp_modulation_order
+    num_bits_in_data_subcarriers = effective_subcarriers * avg_modulation_order
+    if num_symbols_per_profile > 1:
+        num_bits_in_data_subcarriers *= num_symbols_per_profile
 
-    return DSActualSymbolPeriod_usec, DSEffectiveSubcarriers
+    num_full_codewords = math.floor(num_bits_in_data_subcarriers / ldpc_fec_cw[0])
+    num_ncp_mbs = num_full_codewords + math.ceil(num_symbols_per_profile)
 
-def calculate_data_rate(DSActualSymbolPeriod_usec, DSEffectiveSubcarriers):
-    NCPBitsperMB = 48
-    SubcarriersPerNCPMB = NCPBitsperMB / NCPModulationOrder
-    NumBitsinDataSubcarriers = DSEffectiveSubcarriers * DSAvgModulationOrder
-    if numSymbolsPerProfile > 1:
-        NumBitsinDataSubcarriers *= numSymbolsPerProfile
+    estimate_shortened_cw_size = ((num_symbols_per_profile * effective_subcarriers - ((num_ncp_mbs + 1) * subcarriers_per_ncp_mb)) * avg_modulation_order) - (ldpc_fec_cw[0] * num_full_codewords)
+    shortened_cw_data = max(0, estimate_shortened_cw_size - (ldpc_fec_cw[2] - ldpc_fec_cw[3] - ldpc_fec_cw[4]))
 
-    NumFullCodewords = math.floor(NumBitsinDataSubcarriers / DSLDPC_FEC_CW[0])
-    NumNCPMBs = NumFullCodewords + math.ceil(numSymbolsPerProfile)
+    total_data_bits = (num_full_codewords * ldpc_fec_cw[1]) + shortened_cw_data
+    rate_across_whole_channel_gbps = total_data_bits / (actual_symbol_period_usec * num_symbols_per_profile * 1000)
+    phy_efficiency = rate_across_whole_channel_gbps * 1e3 / occupied_spectrum
 
-    EstimateShortendedCWSize = ((numSymbolsPerProfile * DSEffectiveSubcarriers - ((NumNCPMBs + 1) * SubcarriersPerNCPMB)) * DSAvgModulationOrder) - (DSLDPC_FEC_CW[0] * NumFullCodewords)
-    ShortendedCWData = max(0, EstimateShortendedCWSize - (DSLDPC_FEC_CW[2] - DSLDPC_FEC_CW[3] - DSLDPC_FEC_CW[4]))
-
-    totalDataBits = (NumFullCodewords * DSLDPC_FEC_CW[1]) + ShortendedCWData
-    RateacrossWholeChannelGbps = totalDataBits / (DSActualSymbolPeriod_usec * numSymbolsPerProfile * 1000)
-    DSPHYEfficiency = RateacrossWholeChannelGbps * pow(10, 3) / DSOccupiedSpectrum
-
-    return totalDataBits, RateacrossWholeChannelGbps, DSPHYEfficiency
+    return total_data_bits, rate_across_whole_channel_gbps, phy_efficiency
 
 def main():
-    DSActualSymbolPeriod_usec, DSEffectiveSubcarriers = calculate_parameters()
-    totalDataBits, RateacrossWholeChannelGbps, DSPHYEfficiency = calculate_data_rate(DSActualSymbolPeriod_usec, DSEffectiveSubcarriers)
+    # User Definable Vars
+    occupied_spectrum = 192  # MHz
+    lower_band_edge = 678   # MHz
+    avg_modulation_order = 12
+    guard_band = 2         # MHz
+    excluded_band = 2      # MHz
+    subcarrier_spacing = 50  # kHz
 
-    print(f"Total Data Bits: {totalDataBits}")
-    print(f"Rate across Whole Channel [Gbps]: {RateacrossWholeChannelGbps}")
-    print(f"Downstream PHY Efficiency: {DSPHYEfficiency}")
+    # Constants
+    global sampling_rate, cyclic_prefix, num_fft_blocks, pilot_density_m, excluded_subcarriers, ncp_modulation_order, num_symbols_per_profile, ldpc_fec_cw
+    sampling_rate = 204.8  # MHz
+    cyclic_prefix = 512
+    num_fft_blocks = 1
+    pilot_density_m = 48
+    excluded_subcarriers = 20
+    ncp_modulation_order = 6
+    num_symbols_per_profile = 1
+    ldpc_fec_cw = [16200, 14216, 1800, 168, 16]  # [CWSize, Infobits, Parity, BCH, CWheader]
+
+    actual_symbol_period_usec, effective_subcarriers = calculate_parameters(occupied_spectrum, lower_band_edge, avg_modulation_order, guard_band, excluded_band, subcarrier_spacing)
+    total_data_bits, rate_across_whole_channel_gbps, phy_efficiency = calculate_data_rate(actual_symbol_period_usec, effective_subcarriers, avg_modulation_order, occupied_spectrum)
+
+    print(f"Total Data Bits: {total_data_bits}")
+    print(f"Rate across Whole Channel [Gbps]: {rate_across_whole_channel_gbps}")
+    print(f"Downstream PHY Efficiency: {phy_efficiency}")
 
 if __name__ == "__main__":
     main()
-
