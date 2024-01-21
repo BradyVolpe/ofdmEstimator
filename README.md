@@ -20,10 +20,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 The program requires Python 3.x to run. Set the essential variables at the beginning of the script as per your requirement:
 
-- `ds_occupied_spectrum`: The occupied spectrum in MHz, for example 192
-- `ds_lower_band_edge`: The lower band edge in MHz, for example 768
-- `ds_avg_modulation_order`: The average modulation order in 2's power, i.e. 2^12 = 4096-QAM
-- `ds_subcarrier_spacing`: The subcarrier spacing in kHz, for example 50
+- `occupied_spectrum`: The occupied spectrum in MHz, for example 192
+- `lower_band_edge`: The lower band edge in MHz, for example 768
+- `avg_modulation_order`: The average modulation order in 2's power, i.e. 2^12 = 4096-QAM
+- `subcarrier_spacing`: The subcarrier spacing in kHz, for example 50
 
 Run the script using a Python interpreter to get the OFDM capacity estimates.
 
