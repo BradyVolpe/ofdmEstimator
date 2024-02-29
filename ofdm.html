@@ -1,0 +1,668 @@
+<html>
+
+<head>
+
+    <!--<style>
+.table-container {
+  width: 100%;
+  overflow: scroll;
+}
+table {
+  width: 100%;
+}
+        .table-container {
+  margin: auto;
+  max-width: 1200px;
+  min-height: 100vh;
+  overflow: scroll;
+  width: 100%;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+thead tr {
+  border-bottom: 1px solid #ddd;
+  border-top: 1px solid #ddd;
+  height: 1px;
+}
+th {
+  font-weight: bold;
+  height: inherit;
+  padding: 0;
+}
+th:not(:first-of-type) {
+  border-left: 1px solid #ddd;
+}
+th button {
+  background-color: #eee;
+  border: none;
+  cursor: pointer;
+  display: block;
+  font: inherit;
+  height: 100%;
+  margin: 0;
+  min-width: max-content;
+  padding: 0.5rem 1rem;
+  position: relative;
+  text-align: left;
+  width: 100%;
+}
+tbody tr {
+  border-bottom: 1px solid #ddd;
+}
+td {
+  padding: 0.5rem 1rem;
+  text-align: left;
+}
+    </style>-->
+    <style>
+        .sortable thead th:not(.no-sort) {
+            cursor: pointer
+        }
+
+        .sortable thead th:not(.no-sort)::after,
+        .sortable thead th:not(.no-sort)::before {
+            transition: color .1s ease-in-out;
+            font-size: 1.2em;
+            color: rgba(0, 0, 0, 0)
+        }
+
+        .sortable thead th:not(.no-sort)::after {
+            margin-left: 3px;
+            content: "▸"
+        }
+
+        .sortable thead th:not(.no-sort):hover::after {
+            color: inherit
+        }
+
+        .sortable thead th:not(.no-sort).dir-d::after {
+            color: inherit;
+            content: "▾"
+        }
+
+        .sortable thead th:not(.no-sort).dir-u::after {
+            color: inherit;
+            content: "▴"
+        }
+
+        .sortable thead th:not(.no-sort).indicator-left::after {
+            content: ""
+        }
+
+        .sortable thead th:not(.no-sort).indicator-left::before {
+            margin-right: 3px;
+            content: "▸"
+        }
+
+        .sortable thead th:not(.no-sort).indicator-left:hover::before {
+            color: inherit
+        }
+
+        .sortable thead th:not(.no-sort).indicator-left.dir-d::before {
+            color: inherit;
+            content: "▾"
+        }
+
+        .sortable thead th:not(.no-sort).indicator-left.dir-u::before {
+            color: inherit;
+            content: "▴"
+        }
+
+        .sortable {
+            --stripe-color: #e4e4e4;
+            --th-color: #fff;
+            --th-bg: #808080;
+            --td-color: #000;
+            --td-on-stripe-color: #000;
+            border-spacing: 0
+        }
+
+        .sortable tbody tr:nth-child(odd) {
+            background-color: var(--stripe-color);
+            color: var(--td-on-stripe-color)
+        }
+
+        .sortable thead th {
+            background: var(--th-bg);
+            color: var(--th-color);
+            font-weight: normal;
+            text-align: left;
+            text-transform: capitalize;
+            vertical-align: baseline;
+            white-space: nowrap
+        }
+
+        .sortable td {
+            color: var(--td-color)
+        }
+
+        .sortable td,
+        .sortable th {
+            padding: 10px
+        }
+
+        .sortable td:first-child,
+        .sortable th:first-child {
+            border-top-left-radius: 4px
+        }
+
+        .sortable td:last-child,
+        .sortable th:last-child {
+            border-top-right-radius: 4px
+        }
+
+        /*# sourceMappingURL=sortable.min.css.map */
+    </style>
+    <script>
+        /**
+ * sortable v2.3.2
+ *
+ * https://www.npmjs.com/package/sortable-tablesort
+ * https://github.com/tofsjonas/sortable
+ *
+ * Makes html tables sortable, No longer ie9+ 😢
+ *
+ * Styling is done in css.
+ *
+ * Copyleft 2017 Jonas Earendel
+ *
+ * This is free and unencumbered software released into the public domain.
+ *
+ * Anyone is free to copy, modify, publish, use, compile, sell, or
+ * distribute this software, either in source code form or as a compiled
+ * binary, for any purpose, commercial or non-commercial, and by any
+ * means.
+ *
+ * In jurisdictions that recognize copyright laws, the author or authors
+ * of this software dedicate any and all copyright interest in the
+ * software to the public domain. We make this dedication for the benefit
+ * of the public at large and to the detriment of our heirs and
+ * successors. We intend this dedication to be an overt act of
+ * relinquishment in perpetuity of all present and future rights to this
+ * software under copyright law.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * For more information, please refer to <http://unlicense.org>
+ *
+ */
+        document.addEventListener('click', function (e) {
+            try {
+                // allows for elements inside TH
+                function findElementRecursive(element, tag) {
+                    return element.nodeName === tag ? element : findElementRecursive(element.parentNode, tag);
+                }
+                var descending_th_class_1 = 'dir-d';
+                var ascending_th_class_1 = 'dir-u';
+                var ascending_table_sort_class = 'asc';
+                var no_sort_class = 'no-sort';
+                var null_last_class = 'n-last';
+                var table_class_name = 'sortable';
+                var alt_sort_1 = e.shiftKey || e.altKey;
+                var element = findElementRecursive(e.target, 'TH');
+                var tr = element.parentNode;
+                var thead = tr.parentNode;
+                var table = thead.parentNode;
+                function reClassify(element, dir) {
+                    element.classList.remove(descending_th_class_1);
+                    element.classList.remove(ascending_th_class_1);
+                    if (dir)
+                        element.classList.add(dir);
+                }
+                function getValue(element) {
+                    var _a;
+                    var value = alt_sort_1 ? element.dataset.sortAlt : (_a = element.dataset.sort) !== null && _a !== void 0 ? _a : element.textContent;
+                    return value;
+                }
+                if (thead.nodeName === 'THEAD' && // sortable only triggered in `thead`
+                    table.classList.contains(table_class_name) &&
+                    !element.classList.contains(no_sort_class) // .no-sort is now core functionality, no longer handled in CSS
+                ) {
+                    var column_index_1;
+                    var nodes = tr.cells;
+                    var tiebreaker_1 = parseInt(element.dataset.sortTbr);
+                    // Reset thead cells and get column index
+                    for (var i = 0; i < nodes.length; i++) {
+                        if (nodes[i] === element) {
+                            column_index_1 = parseInt(element.dataset.sortCol) || i;
+                        }
+                        else {
+                            reClassify(nodes[i], '');
+                        }
+                    }
+                    var dir = descending_th_class_1;
+                    // Check if we're sorting ascending or descending
+                    if (element.classList.contains(descending_th_class_1) ||
+                        (table.classList.contains(ascending_table_sort_class) && !element.classList.contains(ascending_th_class_1))) {
+                        dir = ascending_th_class_1;
+                    }
+                    // Update the `th` class accordingly
+                    reClassify(element, dir);
+                    var reverse_1 = dir === ascending_th_class_1;
+                    var sort_null_last_1 = table.classList.contains(null_last_class);
+                    var compare_1 = function (a, b, index) {
+                        var x = getValue(b.cells[index]);
+                        var y = getValue(a.cells[index]);
+                        if (sort_null_last_1) {
+                            if (x === '' && y !== '') {
+                                return -1;
+                            }
+                            if (y === '' && x !== '') {
+                                return 1;
+                            }
+                        }
+                        var temp = Number(x) - Number(y);
+                        var bool = isNaN(temp) ? x.localeCompare(y) : temp;
+                        return reverse_1 ? -bool : bool;
+                    };
+                    // loop through all tbodies and sort them
+                    for (var i = 0; i < table.tBodies.length; i++) {
+                        var org_tbody = table.tBodies[i];
+                        // Put the array rows in an array, so we can sort them...
+                        var rows = [].slice.call(org_tbody.rows, 0);
+                        // Sort them using Array.prototype.sort()
+                        rows.sort(function (a, b) {
+                            var bool = compare_1(a, b, column_index_1);
+                            return bool === 0 && !isNaN(tiebreaker_1) ? compare_1(a, b, tiebreaker_1) : bool;
+                        });
+                        // Make an empty clone
+                        var clone_tbody = org_tbody.cloneNode();
+                        // Put the sorted rows inside the clone
+                        clone_tbody.append.apply(clone_tbody, rows);
+                        // And finally replace the unsorted tbody with the sorted one
+                        table.replaceChild(clone_tbody, org_tbody);
+                    }
+                }
+            }
+            catch (error) {
+                // console.log(error)
+            }
+        });
+    </script>
+</head>
+
+<body>
+    <table>
+        <tbody>
+            <tr>
+                <th>Occupied Spectrum (MHz)</th>
+                <td><input type="number" id="occupiedSpectrum" min="6.4" max="192" value="192"/></td>
+            </tr>
+            <tr>
+                <th>Guardband in MHz</th>
+                <td><input type="number" id="guardBand" min="2" max="8" value="2"/></td>
+            </tr>
+            <tr>
+                <th>Exclusion Band in MHz</th>
+                <td><input type="number" id="exclusionBand" min="0" max="19.2" value="0"/></td>
+            </tr>
+            <tr>
+                <th>Subcarrier Spacing</th>
+                <td><select id="subcarrierSpacing">
+                    <option value="25,50">Any</option>
+                    <option value="50">50</option>
+                    <option value="25">25</option>
+                </select></td>
+            </tr>
+            <tr>
+                <th>Average OFDM Modulation</th>
+                <td><select id="averageModulation">
+                    <option value="4,6,7,8,9,10,11,12,13,14">Any</option>
+                    <option value="14">16384Qam</option>
+                    <option value="13">8192qam</option>
+                    <option value="12">4096qam</option>
+                    <option value="11">2048qam</option>
+                    <option value="10">1024qam</option>
+                    <option value="9">512qam</option>
+                    <option value="8">256qam</option>
+                    <option value="7">128qam</option>
+                    <option value="6">64qam</option>
+                    <option value="4">16qam</option>
+                </select></td>
+            </tr>
+            <tr>
+                <th>Cyclic Prefix</th>
+                <td><select id="cyclicPrefix">
+                    <option value="192,256,512,768,1024">Any</option>
+                    <option value="192">192</option>
+                    <option value="256">256</option>
+                    <option value="512">512</option>
+                    <option value="768">768</option>
+                    <option value="1024">1024</option>
+                </select></td>
+            </tr>
+            <tr>
+                <th>Rolloff Period (must be &lt;= Cyclic Prefix)</th>
+                <td><select id="rolloffPeriod">
+                    <option value="0,64,128,192,256">Any</option>
+                    <option value="256">256</option>
+                    <option value="192">192</option>
+                    <option value="128">128</option>
+                    <option value="64">64</option>
+                    <option value="0">0</option>
+                </select></td>
+            </tr>
+            <tr>
+                <th>NCP Modulation Order</th>
+                <td><select id="ncpModulationOrder">
+                    <option value="2,4,6">Any</option>
+                    <option value="2">qpsk</option>
+                    <option value="4">16qam</option>
+                    <option value="6">64qam</option>
+                </select></td>
+            </tr>
+            <tr>
+                <th>Interleave</th>
+                <td><select id="interleave">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                    <option>8</option>
+                    <option>9</option>
+                    <option>10</option>
+                    <option>11</option>
+                    <option>12</option>
+                    <option>13</option>
+                    <option>14</option>
+                    <option>15</option>
+                    <option>16</option>
+                    <option>17</option>
+                    <option>18</option>
+                    <option>19</option>
+                    <option>20</option>
+                    <option>21</option>
+                    <option>22</option>
+                    <option>23</option>
+                    <option>24</option>
+                    <option>25</option>
+                    <option>26</option>
+                    <option>27</option>
+                    <option>28</option>
+                    <option>29</option>
+                    <option>30</option>
+                    <option>31</option>
+                    <option>32</option>
+                </select></td>
+            </tr>
+            <tr>
+                <th>Pilot Scale Factor</th>
+                <td><select id="pilotScaleFactor">
+                    <option>48</option>
+                    <option>49</option>
+                    <option>50</option>
+                    <option>51</option>
+                    <option>52</option>
+                    <option>53</option>
+                    <option>54</option>
+                    <option>55</option>
+                    <option>56</option>
+                    <option>57</option>
+                    <option>58</option>
+                    <option>59</option>
+                    <option>60</option>
+                    <option>61</option>
+                    <option>62</option>
+                    <option>63</option>
+                    <option>64</option>
+                    <option>65</option>
+                    <option>66</option>
+                    <option>67</option>
+                    <option>68</option>
+                    <option>69</option>
+                    <option>70</option>
+                    <option>71</option>
+                    <option>72</option>
+                    <option>73</option>
+                    <option>74</option>
+                    <option>75</option>
+                    <option>76</option>
+                    <option>77</option>
+                    <option>78</option>
+                    <option>79</option>
+                    <option>80</option>
+                    <option>81</option>
+                    <option>82</option>
+                    <option>83</option>
+                    <option>84</option>
+                    <option>85</option>
+                    <option>86</option>
+                    <option>87</option>
+                    <option>88</option>
+                    <option>89</option>
+                    <option>90</option>
+                    <option>91</option>
+                    <option>92</option>
+                    <option>93</option>
+                    <option>94</option>
+                    <option>95</option>
+                    <option>96</option>
+                    <option>97</option>
+                    <option>98</option>
+                    <option>99</option>
+                    <option>100</option>
+                    <option>101</option>
+                    <option>102</option>
+                    <option>103</option>
+                    <option>104</option>
+                    <option>105</option>
+                    <option>106</option>
+                    <option>107</option>
+                    <option>108</option>
+                    <option>109</option>
+                    <option>110</option>
+                    <option>111</option>
+                    <option>112</option>
+                    <option>113</option>
+                    <option>114</option>
+                    <option>115</option>
+                    <option>116</option>
+                    <option>117</option>
+                    <option>118</option>
+                    <option>119</option>
+                    <option>120</option>
+                    <option>121</option>
+                    <option>122</option>
+                    <option>123</option>
+                    <option>124</option>
+                    <option>125</option>
+                    <option>126</option>
+                    <option>127</option>
+                    <option>128</option>
+                </select></td>
+            </tr>
+            <tr>
+                <th></th>
+                <td><button id="run" onclick="calc()">Recalculate</button></td>
+            </tr>
+        </tbody>
+    </table>    
+    <table id="output" style="width:100%;border: 1px solid black;" class="sortable">
+        <thead>
+            <tr>
+                <th>Subcarrier Spacing (KHz)</th>
+                <th>Modulation (Qam)</th>
+                <th>Interleave</th>
+                <th>Cyclic Prefix</th>
+                <th>Rolloff Period</th>
+                <th>NCP Modulation (Qam)</th>
+                <th>Pilot Scale Factor</th>
+                <th>Mbps per MHz</th>
+                <th id="gBps">Gbps at 192MHz</th>
+            </tr>
+        </thead>
+        <tbody id="list_tbody"></tbody>
+    </table>
+    <script>
+        /*
+        Constants DownstreamChannel
+        */
+        let bandwidthModulationLookup = {
+            "zero": 1,
+            "qpsk": 2,
+            "8qam": 3,
+            "16qam": 4,
+            "32qam": 5,
+            "64qam": 6,
+            "128qam": 7,
+            "256qam": 8,
+            "512qam": 9,
+            "1024qam": 10,
+            "2048qam": 11,
+            "4096qam": 12,
+            "8192qam": 13,
+            "16384qam": 14
+        };
+        let modulationNameLookup = {
+            1: "zero",
+            2: "qpsk",
+            3: "8qam",
+            4: "16qam",
+            5: "32qam",
+            6: "64qam",
+            7: "128qam",
+            8: "256qam",
+            9: "512qam",
+            10: "1024qam",
+            11: "2048qam",
+            12: "4096qam",
+            13: "8192qam",
+            14: "16384qam"
+        }
+        
+
+        function ofdmBandwidth(NCPModulationOrder, DSNumFFTBlocks, DSCyclicPrefix, DSWindowing, DSPilotDensity_M, DSSubcarrierSpacing, DSAvgModulationOrder, DSOccupiedSpectrum, DSGuardBand, DSExcludedBand) {
+            let numSymbolsPerProfile;
+            if (DSSubcarrierSpacing == 50)
+                numSymbolsPerProfile = 1000000 / 20
+            else
+                numSymbolsPerProfile = 1000000 / 40            
+            const DSSamplingRate = 204.8
+
+            const DSExcludedSubcarriers = (DSExcludedBand * 1000000) / (DSSubcarrierSpacing * 1000)
+
+
+
+
+            const DSNumFFTPoints = (DSSamplingRate * 1000) / DSSubcarrierSpacing
+            const DSSymbolPeriod_usec = 1000 / DSSubcarrierSpacing
+            const DSCyclicPrefix_usec = DSCyclicPrefix / DSSamplingRate
+            const DSActualSymbolPeriod_usec = DSSymbolPeriod_usec + DSCyclicPrefix_usec
+            const DSSymbolEfficiency = 100 * DSSymbolPeriod_usec / DSActualSymbolPeriod_usec
+            const DSModulatedSubcarriers = (DSOccupiedSpectrum - DSGuardBand - DSExcludedBand) * 1000 / DSSubcarrierSpacing
+            let DSNumPLCSubcarriers
+            if (DSSubcarrierSpacing == 50)
+                DSNumPLCSubcarriers = 8
+            else
+                DSNumPLCSubcarriers = 16
+            const DSNumContPilots = Math.min(Math.max(8, Math.ceil(DSPilotDensity_M * DSOccupiedSpectrum / 190)), 120) + 8
+            const DSNumScatteredPilots = Math.ceil((DSModulatedSubcarriers - DSNumPLCSubcarriers) / 128)
+            const DSEffectiveSubcarriers = DSModulatedSubcarriers - (DSExcludedSubcarriers + DSNumPLCSubcarriers * DSNumFFTBlocks + DSNumContPilots + DSNumScatteredPilots)
+
+            const NCPBitsperMB = 48
+            const SubcarriersPerNCPMB = NCPBitsperMB / NCPModulationOrder
+
+            let NumBitsinDataSubcarriers = DSEffectiveSubcarriers * DSAvgModulationOrder
+            if (numSymbolsPerProfile > 1)
+                NumBitsinDataSubcarriers = NumBitsinDataSubcarriers * numSymbolsPerProfile
+
+            //DSLDPC_FEC_CW = CWSize, Infobits, Parity, BCH , CWheader
+            const DSLDPC_FEC_CW = [16200, 14216, 1800, 168, 16]
+            const NumFullCodewords = Math.floor(NumBitsinDataSubcarriers / DSLDPC_FEC_CW[0])
+
+            const NumNCPMBs = NumFullCodewords + Math.ceil(1 * numSymbolsPerProfile)
+            const EstimateShortendedCWSize = ((numSymbolsPerProfile * DSEffectiveSubcarriers - ((NumNCPMBs + 1) * SubcarriersPerNCPMB)) * DSAvgModulationOrder) - (DSLDPC_FEC_CW[0] * NumFullCodewords)
+            let ShortendedCWData;
+            if (EstimateShortendedCWSize > 0)
+                ShortendedCWData = EstimateShortendedCWSize - (DSLDPC_FEC_CW[2] - DSLDPC_FEC_CW[3] - DSLDPC_FEC_CW[4])
+            else
+                ShortendedCWData = 0
+
+            const totalDataBits = (NumFullCodewords * DSLDPC_FEC_CW[1]) + ShortendedCWData
+            const RateacrossWholeChannelGbps = totalDataBits / (DSActualSymbolPeriod_usec * numSymbolsPerProfile * 1000)
+            const DSPHYEfficiency = RateacrossWholeChannelGbps * Math.pow(10, 3) / (DSOccupiedSpectrum)
+            return {
+                RateacrossWholeChannelGbps,
+                DSPHYEfficiency
+            }
+        }
+        function createElementWithId(tagName, id) {
+            var elem = document.createElement(tagName);
+            var attr = document.createAttribute("id");
+            attr.nodeValue = id;
+            elem.setAttributeNode(attr);
+            return elem;
+        }
+        function calc() {
+            const table = document.getElementById("output");
+            
+            const arrNCPModulationOrder = String(document.getElementById('ncpModulationOrder').value).split(',').map(el=>parseInt(el));
+            const arrDSCyclicPrefix = String(document.getElementById('cyclicPrefix').value).split(',').map(el=>parseInt(el));
+            const arrDSWindowing = String(document.getElementById('rolloffPeriod').value).split(',').map(el=>parseInt(el));
+            const arrDSSubcarrierSpacing = String(document.getElementById('subcarrierSpacing').value).split(',').map(el=>parseInt(el));
+            const arrDSAvgModulationOrder = String(document.getElementById('averageModulation').value).split(',').map(el=>parseInt(el));
+            const DSOccupiedSpectrum = parseFloat(document.getElementById('occupiedSpectrum').value)
+            document.getElementById('gBps').textContent = `Gbps at ${DSOccupiedSpectrum} MHz`;
+            const DSGuardBand = parseFloat(document.getElementById('guardBand').value)
+            const DSExcludedBand = parseFloat(document.getElementById('exclusionBand').value)
+            var oldtbody = table.tBodies[0]
+            while (oldtbody.hasChildNodes()) {
+                oldtbody.removeChild(oldtbody.lastChild);
+            }
+            results = [];
+            arrNCPModulationOrder.forEach((NCPModulationOrder) => {
+                arrDSCyclicPrefix.forEach((DSCyclicPrefix) => {                    
+                    arrDSWindowing.forEach((DSWindowing) => {
+                        if (DSWindowing <= DSCyclicPrefix) {
+                            arrDSSubcarrierSpacing.forEach((DSSubcarrierSpacing) => {
+                                arrDSAvgModulationOrder.forEach((DSAvgModulationOrder) => {
+                                    DSNumFFTBlocks = document.getElementById('interleave').value;
+                                    DSPilotDensity_M = document.getElementById('pilotScaleFactor').value
+                                    result = ofdmBandwidth(NCPModulationOrder, DSNumFFTBlocks, DSCyclicPrefix, DSWindowing, DSPilotDensity_M, DSSubcarrierSpacing, DSAvgModulationOrder, DSOccupiedSpectrum, DSGuardBand, DSExcludedBand);
+                                    results.push(result)
+                                    let row = table.tBodies[0].insertRow();
+
+                                    let subSpacingCell = row.insertCell();
+                                    subSpacingCell.appendChild(document.createTextNode(DSSubcarrierSpacing));
+                                    let modulationCell = row.insertCell();
+                                    let text = document.createTextNode(modulationNameLookup[DSAvgModulationOrder]);
+                                    modulationCell.appendChild(text);
+                                    let interleaveCell = row.insertCell();
+                                    interleaveCell.appendChild(document.createTextNode(DSNumFFTBlocks));
+                                    let cyclicPrefixCell = row.insertCell();
+                                    cyclicPrefixCell.appendChild(document.createTextNode(DSCyclicPrefix));
+                                    let rolloffPeriodCell = row.insertCell();
+                                    rolloffPeriodCell.appendChild(document.createTextNode(DSWindowing));
+                                    let ncpModulationCell = row.insertCell();
+                                    ncpModulationCell.appendChild(document.createTextNode(modulationNameLookup[NCPModulationOrder]));
+                                    let pilotScaleFactorCell = row.insertCell();
+                                    pilotScaleFactorCell.appendChild(document.createTextNode(DSPilotDensity_M));
+                                    let bandwidthPerMhzCell = row.insertCell();
+                                    bandwidthPerMhzCell.appendChild(document.createTextNode(result.DSPHYEfficiency.toFixed(3)));
+                                    let bandwidthPer192MhzCell = row.insertCell();
+                                    bandwidthPer192MhzCell.appendChild(document.createTextNode((result.RateacrossWholeChannelGbps).toFixed(3)));
+
+
+                                });
+                            });
+                        }
+                    });
+                });
+            });
+        }
+        calc();
+    </script>
+</body>
+
+</html>
