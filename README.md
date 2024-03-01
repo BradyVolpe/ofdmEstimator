@@ -33,4 +33,4 @@ Contributions are welcome. Please submit a pull request or open an issue for any
 
 ## Contact
 
-For more information or queries, please contact Brady Volpe at [brady [ at ] volpefirm dot com).
+For more information or queries, please contact Brady Volpe at [brady.volpe [ at ] volpefirm dot com).
