@@ -17,8 +17,10 @@ You may obtain a copy of the License at
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
 ## Usage
+Update - You can now run this application in your web browser by downloading the ofdm.html file - it has everything you need. Thanks to @snmpstack for the contribution. 
 
-The program requires Python 3.x to run. Set the essential variables at the beginning of the script as per your requirement:
+
+The Python program requires Python 3.x to run. Set the essential variables at the beginning of the script as per your requirement:
 
 - `occupied_spectrum`: The occupied spectrum in MHz, for example 192
 - `lower_band_edge`: The lower band edge in MHz, for example 768
