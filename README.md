@@ -1,4 +1,4 @@
-# OFDM Capacity Estimation
+# OFDM and OFDMA Capacity Estimation
 
 This software is designed to estimate the capacity of an Orthogonal Frequency-Division Multiplexing (OFDM) DOCSIS 3.1 channel. It calculates various parameters like the total data bits, the rate across the entire channel, and the Downstream Physical Layer (PHY) efficiency, based on user-defined input for the occupied spectrum, lower band edge, average modulation order, and subcarrier spacing.
 
@@ -20,7 +20,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 Update - You can now run this application in your web browser by downloading the ofdm.html file - it has everything you need. Thanks to @snmpstack for the contribution. 
 
 
-The Python program requires Python 3.x to run. Set the essential variables at the beginning of the script as per your requirement:
+The OFDM Estimation Python program requires Python 3.x to run. Set the essential variables at the beginning of the script as per your requirement:
 
 - `occupied_spectrum`: The occupied spectrum in MHz, for example 192
 - `lower_band_edge`: The lower band edge in MHz, for example 768
@@ -28,6 +28,12 @@ The Python program requires Python 3.x to run. Set the essential variables at th
 - `subcarrier_spacing`: The subcarrier spacing in kHz, for example 50
 
 Run the script using a Python interpreter to get the OFDM capacity estimates.
+
+Run: python3 ofdm_estimation.py
+
+The OFDMA Estimation Python program requires Python 3.x to run. Upon running the script, it will ask for a start frequency, stop frequency and modulation order in bits.
+
+Run: python3 ofdma_estimation.py 
 
 ## Contributions
 
