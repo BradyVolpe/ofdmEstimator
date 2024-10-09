@@ -41,7 +41,7 @@ Contributions are welcome. Please submit a pull request or open an issue for any
 
 ## Contributors
 
-Jason Patterson (RocNet Supply) [jason.patterson [__at__] rocnetsupply dot com)
+Jason Patterson (RocNet Supply) [jason.patterson [ at ] rocnetsupply dot com)
 
 - ofdm.html
 - ofdma Calculator
