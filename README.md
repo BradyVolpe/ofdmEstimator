@@ -39,6 +39,13 @@ Run: python3 ofdma_estimation.py
 
 Contributions are welcome. Please submit a pull request or open an issue for any enhancements, bug fixes, or feature requests.
 
+## Contributors
+
+Jason Patterson (RocNet Supply) [jason.patterson [ at ] rocnetsupply dot com)
+
+- ofdm.html
+- ofdma Calculator
+
 ## Contact
 
 For more information or queries, please contact Brady Volpe at [brady.volpe [ at ] volpefirm dot com).
