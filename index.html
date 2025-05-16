@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OFDM/OFDMA Throughput Estimator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+        h1 {
+            text-align: center;
+        }
+        .form-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            max-width: 600px;
+            margin: auto;
+        }
+        .form-section label {
+            display: block;
+            margin-top: 10px;
+        }
+        .form-section input, .form-section select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+        }
+        .form-section button {
+            margin-top: 20px;
+            padding: 10px 15px;
+            font-size: 16px;
+        }
+        .output {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>OFDM / OFDMA Throughput Estimator</h1>
+
+<div class="form-section">
+    <label for="channelType">Channel Type:</label>
+    <select id="channelType">
+        <option value="ofdm">OFDM (Downstream)</option>
+        <option value="ofdma">OFDMA (Upstream)</option>
+    </select>
+
+    <label for="occupiedSpectrum">Occupied Spectrum (MHz):</label>
+    <input type="number" id="occupiedSpectrum" value="192">
+
+    <label for="avgModOrder">Average Modulation Order:</label>
+    <input type="number" id="avgModOrder" value="12">
+
+    <label for="subcarrierSpacing">Subcarrier Spacing (kHz):</label>
+    <input type="number" id="subcarrierSpacing" value="50">
+
+    <label for="guardBand">Guard Band (MHz):</label>
+    <input type="number" id="guardBand" value="2">
+
+    <label for="excludedBand">Excluded Band (MHz):</label>
+    <input type="number" id="excludedBand" value="2">
+
+    <button onclick="calculateThroughput()">Estimate Throughput</button>
+</div>
+
+<div class="output" id="outputResult">Output will appear here...</div>
+
+<script>
+    async function calculateThroughput() {
+        const params = {
+            type: document.getElementById('channelType').value,
+            spectrum: document.getElementById('occupiedSpectrum').value,
+            modOrder: document.getElementById('avgModOrder').value,
+            spacing: document.getElementById('subcarrierSpacing').value,
+            guard: document.getElementById('guardBand').value,
+            exclude: document.getElementById('excludedBand').value
+        };
+
+        const query = new URLSearchParams(params).toString();
+        const response = await fetch(`/api/estimate?${query}`);
+        const data = await response.json();
+
+        document.getElementById('outputResult').textContent =
+            `${params.type.toUpperCase()} Estimated Throughput: ${data.throughput} Gbps`;
+    }
+</script>
+
+</body>
+</html>
