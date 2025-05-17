@@ -1,76 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>OFDM/OFDMA Throughput Estimator</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f2f2f2;
+            font-family: 'Poppins', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #f0f0f0;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
         }
+
         h1 {
-            text-align: center;
+            font-weight: 600;
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.5);
         }
-        .form-section {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+
+        .subtitle {
+            font-weight: 400;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+            color: #cbd5e1;
+            text-align: center;
             max-width: 600px;
-            margin: auto;
         }
-        .form-section label {
-            display: block;
-            margin-top: 10px;
-        }
-        .form-section input, .form-section select {
+
+        .form-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 30px 40px;
+            max-width: 480px;
             width: 100%;
-            padding: 8px;
-            margin-top: 4px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
         }
-        .form-section button {
+
+        .form-section:hover {
+            transform: translateY(-6px);
+        }
+
+        label {
+            display: block;
             margin-top: 20px;
-            padding: 10px 15px;
-            font-size: 16px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #e0e7ff;
         }
+
+        select, input[type=number] {
+            width: 100%;
+            padding: 12px 14px;
+            margin-top: 6px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            background: rgba(255,255,255,0.15);
+            color: #f0f0f0;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+            transition: background 0.3s ease;
+        }
+
+        select:focus, input[type=number]:focus {
+            outline: none;
+            background: rgba(255,255,255,0.3);
+            box-shadow: 0 0 8px #7f9cf5;
+            color: #fff;
+        }
+
+        button {
+            margin-top: 30px;
+            width: 100%;
+            padding: 14px 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e3c72;
+            background: #facc15;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(250,204,21,0.6);
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        button:hover {
+            background: #eab308;
+            box-shadow: 0 8px 20px rgba(234,179,8,0.8);
+        }
+
         .output {
+            margin-top: 40px;
+            font-weight: 700;
+            font-size: 1.6rem;
+            color: #facc15;
             text-align: center;
-            font-weight: bold;
-            font-size: 18px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+            min-height: 48px;
+            user-select: none;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 20px 0;
+            font-size: 0.9rem;
+            color: #a0aec0;
+            text-align: center;
+            user-select: none;
+        }
+
+        @media (max-width: 520px) {
+            .form-section {
+                padding: 25px 20px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            button {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
 <body>
 
 <h1>OFDM / OFDMA Throughput Estimator</h1>
+<div class="subtitle">Quickly estimate your channel throughput with customizable parameters.</div>
 
-<div class="form-section">
+<div class="form-section" role="form" aria-label="Throughput Estimator Form">
     <label for="channelType">Channel Type:</label>
-    <select id="channelType">
+    <select id="channelType" aria-required="true">
         <option value="ofdm">OFDM (Downstream)</option>
         <option value="ofdma">OFDMA (Upstream)</option>
     </select>
 
     <label for="occupiedSpectrum">Occupied Spectrum (MHz):</label>
-    <input type="number" id="occupiedSpectrum" value="192">
+    <input type="number" id="occupiedSpectrum" value="192" min="1" aria-required="true" />
 
     <label for="avgModOrder">Average Modulation Order:</label>
-    <input type="number" id="avgModOrder" value="12">
+    <input type="number" id="avgModOrder" value="12" min="1" aria-required="true" />
 
     <label for="subcarrierSpacing">Subcarrier Spacing (kHz):</label>
-    <input type="number" id="subcarrierSpacing" value="50">
+    <input type="number" id="subcarrierSpacing" value="50" min="1" aria-required="true" />
 
     <label for="guardBand">Guard Band (MHz):</label>
-    <input type="number" id="guardBand" value="2">
+    <input type="number" id="guardBand" value="2" min="0" aria-required="true" />
 
     <label for="excludedBand">Excluded Band (MHz):</label>
-    <input type="number" id="excludedBand" value="2">
+    <input type="number" id="excludedBand" value="2" min="0" aria-required="true" />
 
-    <button onclick="calculateThroughput()">Estimate Throughput</button>
+    <button onclick="calculateThroughput()" aria-label="Estimate Throughput">Estimate Throughput</button>
 </div>
 
-<div class="output" id="outputResult">Output will appear here...</div>
+<div class="output" id="outputResult" aria-live="polite" aria-atomic="true">Output will appear here...</div>
+
+<footer>© 2025 OFDM Estimator • Designed with 💡 and code</footer>
 
 <script>
     async function calculateThroughput() {
@@ -84,11 +181,21 @@
         };
 
         const query = new URLSearchParams(params).toString();
-        const response = await fetch(`/api/estimate?${query}`);
-        const data = await response.json();
+        try {
+            // Updated backend URL with explicit host and port
+            const response = await fetch(`http://localhost:5001/api/estimate?${query}`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            const data = await response.json();
 
-        document.getElementById('outputResult').textContent =
-            `${params.type.toUpperCase()} Estimated Throughput: ${data.throughput} Gbps`;
+            document.getElementById('outputResult').textContent =
+                `${params.type.toUpperCase()} Estimated Throughput: ${data.throughput} Gbps`;
+        } catch (error) {
+            document.getElementById('outputResult').textContent = 'Error estimating throughput. Please try again.';
+            console.error('Fetch error:', error);
+        }
     }
 </script>
 
