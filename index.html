@@ -1,203 +1,1089 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>OFDM/OFDMA Throughput Estimator</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOCSIS 3.1 OFDM/OFDMA Estimator — Brady Volpe / Volpe Firm</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        * {
-            box-sizing: border-box;
-        }
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #21262d;
+      --border:    #30363d;
+      --blue:      #3b82f6;
+      --blue-dim:  #1d4ed8;
+      --orange:    #f97316;
+      --orange-dim:#c2410c;
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --text:      #e6edf3;
+      --text-muted:#8b949e;
+      --text-dim:  #6e7681;
+      --mono:      'JetBrains Mono', 'Fira Code', monospace;
+    }
 
-        body {
-            font-family: 'Poppins', Arial, sans-serif;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: #f0f0f0;
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 20px;
-        }
+    html { font-size: 16px; }
 
-        h1 {
-            font-weight: 600;
-            font-size: 2.8rem;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-        }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-        .subtitle {
-            font-weight: 400;
-            font-size: 1.1rem;
-            margin-bottom: 40px;
-            color: #cbd5e1;
-            text-align: center;
-            max-width: 600px;
-        }
+    /* ── Header ── */
+    header {
+      width: 100%;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
 
-        .form-section {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
-            padding: 30px 40px;
-            max-width: 480px;
-            width: 100%;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-            transition: transform 0.3s ease;
-        }
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
 
-        .form-section:hover {
-            transform: translateY(-6px);
-        }
+    header h1 span { color: var(--blue); }
 
-        label {
-            display: block;
-            margin-top: 20px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            color: #e0e7ff;
-        }
+    header p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
 
-        select, input[type=number] {
-            width: 100%;
-            padding: 12px 14px;
-            margin-top: 6px;
-            border-radius: 8px;
-            border: none;
-            font-size: 1rem;
-            font-weight: 500;
-            background: rgba(255,255,255,0.15);
-            color: #f0f0f0;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
-            transition: background 0.3s ease;
-        }
+    /* ── Main layout ── */
+    main {
+      width: 100%;
+      max-width: 1100px;
+      padding: 28px 16px 48px;
+      flex: 1;
+    }
 
-        select:focus, input[type=number]:focus {
-            outline: none;
-            background: rgba(255,255,255,0.3);
-            box-shadow: 0 0 8px #7f9cf5;
-            color: #fff;
-        }
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
 
-        button {
-            margin-top: 30px;
-            width: 100%;
-            padding: 14px 0;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #1e3c72;
-            background: #facc15;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            box-shadow: 0 6px 12px rgba(250,204,21,0.6);
-            transition: background 0.3s ease, box-shadow 0.3s ease;
-        }
+    .tab-btn {
+      padding: 10px 24px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      margin-bottom: -1px;
+    }
 
-        button:hover {
-            background: #eab308;
-            box-shadow: 0 8px 20px rgba(234,179,8,0.8);
-        }
+    .tab-btn:hover { color: var(--text); }
 
-        .output {
-            margin-top: 40px;
-            font-weight: 700;
-            font-size: 1.6rem;
-            color: #facc15;
-            text-align: center;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.7);
-            min-height: 48px;
-            user-select: none;
-        }
+    .tab-btn.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+    }
 
-        footer {
-            margin-top: auto;
-            padding: 20px 0;
-            font-size: 0.9rem;
-            color: #a0aec0;
-            text-align: center;
-            user-select: none;
-        }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
-        @media (max-width: 520px) {
-            .form-section {
-                padding: 25px 20px;
-            }
-            h1 {
-                font-size: 2rem;
-            }
-            button {
-                font-size: 1rem;
-            }
-        }
-    </style>
+    /* ── Grid layout ── */
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 680px) {
+      .calc-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 22px;
+    }
+
+    .card-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    /* ── Form fields ── */
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field:last-child { margin-bottom: 0; }
+
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.83rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    .field-label .tooltip-btn {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 10px;
+      font-weight: 700;
+      cursor: help;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .tooltip-btn:hover .tooltip-text {
+      display: block;
+    }
+
+    .tooltip-text {
+      display: none;
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1c2128;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.76rem;
+      font-weight: 400;
+      color: var(--text);
+      width: 230px;
+      z-index: 100;
+      line-height: 1.45;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      white-space: normal;
+    }
+
+    select, input[type="number"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b949e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 32px;
+    }
+
+    select:focus, input[type="number"]:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+
+    input.error {
+      border-color: var(--red) !important;
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.15) !important;
+    }
+
+    .error-msg {
+      font-size: 0.76rem;
+      color: var(--red);
+      margin-top: 4px;
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+
+    /* ── Results panel ── */
+    .results-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 22px;
+    }
+
+    .primary-result {
+      text-align: center;
+      padding: 20px 12px 16px;
+      background: linear-gradient(135deg, rgba(249,115,22,0.08) 0%, rgba(249,115,22,0.04) 100%);
+      border: 1px solid rgba(249,115,22,0.2);
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .primary-result .label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 6px;
+    }
+
+    .primary-result .value {
+      font-family: var(--mono);
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: var(--orange);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .primary-result .unit {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-left: 4px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 14px;
+    }
+
+    .metric .m-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+
+    .metric .m-value {
+      font-family: var(--mono);
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: var(--blue);
+    }
+
+    /* ── Reset button ── */
+    .btn-reset {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      margin-bottom: 20px;
+    }
+
+    .btn-reset:hover {
+      color: var(--text);
+      border-color: var(--blue);
+    }
+
+    /* ── Section divider ── */
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+      grid-column: 1 / -1;
+    }
+
+    /* ── Spec note ── */
+    .spec-note {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+      margin-top: 16px;
+      padding: 12px 14px;
+      background: rgba(59,130,246,0.05);
+      border: 1px solid rgba(59,130,246,0.15);
+      border-radius: 6px;
+    }
+
+    .spec-note strong { color: var(--text-muted); }
+
+    /* ── Footer ── */
+    footer {
+      width: 100%;
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Spinner / loading ── */
+    .result-loading { opacity: 0.5; transition: opacity 0.1s; }
+  </style>
 </head>
 <body>
 
-<h1>OFDM / OFDMA Throughput Estimator</h1>
-<div class="subtitle">Quickly estimate your channel throughput with customizable parameters.</div>
+<header>
+  <h1>DOCSIS 3.1 <span>OFDM/OFDMA</span> Estimator</h1>
+  <p>Downstream &amp; upstream throughput estimator based on DOCSIS 3.1 PHY specification parameters</p>
+</header>
 
-<div class="form-section" role="form" aria-label="Throughput Estimator Form">
-    <label for="channelType">Channel Type:</label>
-    <select id="channelType" aria-required="true">
-        <option value="ofdm">OFDM (Downstream)</option>
-        <option value="ofdma">OFDMA (Upstream)</option>
-    </select>
+<main>
+  <!-- ── Tab navigation ── -->
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" role="tab" aria-selected="true"  aria-controls="panel-ofdm"  id="tab-ofdm"  onclick="switchTab('ofdm')">OFDM Downstream</button>
+    <button class="tab-btn"        role="tab" aria-selected="false" aria-controls="panel-ofdma" id="tab-ofdma" onclick="switchTab('ofdma')">OFDMA Upstream</button>
+  </div>
 
-    <label for="occupiedSpectrum">Occupied Spectrum (MHz):</label>
-    <input type="number" id="occupiedSpectrum" value="192" min="1" aria-required="true" />
+  <!-- ══════════════════════════════════════════════════════════
+       OFDM DOWNSTREAM PANEL
+  ══════════════════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="panel-ofdm" role="tabpanel" aria-labelledby="tab-ofdm">
+    <button class="btn-reset" onclick="resetOfdm()" title="Restore DOCSIS 3.1 default values">
+      ↺ DOCSIS 3.1 Defaults
+    </button>
 
-    <label for="avgModOrder">Average Modulation Order:</label>
-    <input type="number" id="avgModOrder" value="12" min="1" aria-required="true" />
+    <div class="calc-grid">
+      <!-- Inputs -->
+      <div class="card">
+        <div class="card-title">Channel Parameters</div>
 
-    <label for="subcarrierSpacing">Subcarrier Spacing (kHz):</label>
-    <input type="number" id="subcarrierSpacing" value="50" min="1" aria-required="true" />
+        <!-- Channel Width -->
+        <div class="field">
+          <div class="field-label">
+            Channel Width (MHz)
+            <span class="tooltip-btn" tabindex="0" role="button" aria-label="Tooltip">?
+              <span class="tooltip-text">Total OFDM channel bandwidth. DOCSIS 3.1 supports 24–192 MHz downstream channels in multiples of the subcarrier spacing. Max is 192 MHz per CM-SP-PHYv3.1.</span>
+            </span>
+          </div>
+          <input type="number" id="ds-width" value="192" min="24" max="192" step="1"
+                 oninput="calcOfdm()" aria-label="Channel width in MHz" />
+          <div class="error-msg" id="ds-width-err">Must be 24–192 MHz</div>
+        </div>
 
-    <label for="guardBand">Guard Band (MHz):</label>
-    <input type="number" id="guardBand" value="2" min="0" aria-required="true" />
+        <!-- Subcarrier Spacing -->
+        <div class="field">
+          <div class="field-label">
+            Subcarrier Spacing
+            <span class="tooltip-btn" tabindex="0" role="button" aria-label="Tooltip">?
+              <span class="tooltip-text">50 kHz → 4096-point FFT at 204.8 MHz sample rate (20 µs symbol). 25 kHz → 8192-point FFT (40 µs symbol). 50 kHz is most commonly deployed. [DOCSIS 3.1 §7.4.2]</span>
+            </span>
+          </div>
+          <select id="ds-spacing" onchange="calcOfdm()" aria-label="Subcarrier spacing">
+            <option value="50" selected>50 kHz (most common)</option>
+            <option value="25">25 kHz</option>
+          </select>
+        </div>
 
-    <label for="excludedBand">Excluded Band (MHz):</label>
-    <input type="number" id="excludedBand" value="2" min="0" aria-required="true" />
+        <!-- Modulation -->
+        <div class="field">
+          <div class="field-label">
+            Modulation Order
+            <span class="tooltip-btn" tabindex="0" role="button" aria-label="Tooltip">?
+              <span class="tooltip-text">Average modulation per data subcarrier. DOCSIS 3.1 supports QPSK through 4096-QAM. Higher orders require better SNR. [CM-SP-PHYv3.1 §7.6]</span>
+            </span>
+          </div>
+          <select id="ds-mod" onchange="calcOfdm()" aria-label="Modulation order">
+            <option value="2">QPSK (2 bits/sym)</option>
+            <option value="4">16-QAM (4 bits/sym)</option>
+            <option value="6">64-QAM (6 bits/sym)</option>
+            <option value="8">256-QAM (8 bits/sym)</option>
+            <option value="10">1024-QAM (10 bits/sym)</option>
+            <option value="11">2048-QAM (11 bits/sym)</option>
+            <option value="12" selected>4096-QAM (12 bits/sym)</option>
+          </select>
+        </div>
 
-    <button onclick="calculateThroughput()" aria-label="Estimate Throughput">Estimate Throughput</button>
-</div>
+        <!-- Guard Band -->
+        <div class="field">
+          <div class="field-label">
+            Guard Band (MHz)
+            <span class="tooltip-btn" tabindex="0" role="button" aria-label="Tooltip">?
+              <span class="tooltip-text">Total guard band removed from the occupied spectrum (both edges combined). Prevents interference with adjacent channels. Typical: 1 MHz. Range: 0–4 MHz.</span>
+            </span>
+          </div>
+          <input type="number" id="ds-guard" value="1" min="0" max="4" step="0.1"
+                 oninput="calcOfdm()" aria-label="Guard band in MHz" />
+          <div class="error-msg" id="ds-guard-err">Must be 0–4 MHz</div>
+        </div>
 
-<div class="output" id="outputResult" aria-live="polite" aria-atomic="true">Output will appear here...</div>
+        <!-- Excluded Spectrum -->
+        <div class="field">
+          <div class="field-label">
+            Excluded Spectrum (MHz)
+            <span class="tooltip-btn" tabindex="0" role="button" aria-label="Tooltip">?
+              <span class="tooltip-text">Spectrum notched out within the channel (e.g., for legacy analog or narrowband interference). Reduces usable subcarriers. Range: 0–20 MHz.</span>
+            </span>
+          </div>
+          <input type="number" id="ds-exclude" value="0" min="0" max="20" step="0.1"
+                 oninput="calcOfdm()" aria-label="Excluded spectrum in MHz" />
+          <div class="error-msg" id="ds-exclude-err">Must be 0–20 MHz</div>
+        </div>
 
-<footer>© 2025 OFDM Estimator • Designed with 💡 and code</footer>
+        <!-- Cyclic Prefix -->
+        <div class="field">
+          <div class="field-label">
+            Cyclic Prefix (samples)
+            <span class="tooltip-btn" tabindex="0" role="button" aria-label="Tooltip">?
+              <span class="tooltip-text">CP duration in samples at 204.8 MHz sample rate. 512 samples = 2.5 µs, sufficient for most HFC plant delay spreads. Larger CP wastes spectral efficiency but improves multipath tolerance. [CM-SP-PHYv3.1 §7.4.4]</span>
+            </span>
+          </div>
+          <select id="ds-cp" onchange="calcOfdm()" aria-label="Cyclic prefix samples">
+            <option value="128">128 samples (0.625 µs)</option>
+            <option value="256">256 samples (1.25 µs)</option>
+            <option value="512" selected>512 samples (2.5 µs) — typical</option>
+            <option value="1024">1024 samples (5.0 µs)</option>
+          </select>
+        </div>
+      </div><!-- /card -->
+
+      <!-- Results -->
+      <div class="results-card" id="ds-results">
+        <div class="card-title">Downstream Results</div>
+
+        <div class="primary-result">
+          <div class="label">Aggregate Throughput</div>
+          <div class="value" id="ds-throughput">—<span class="unit">Gbps</span></div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric">
+            <div class="m-label">Spectral Efficiency</div>
+            <div class="m-value" id="ds-efficiency">—</div>
+          </div>
+          <div class="metric">
+            <div class="m-label">Data Subcarriers</div>
+            <div class="m-value" id="ds-subcarriers">—</div>
+          </div>
+          <div class="metric">
+            <div class="m-label">Symbol Period</div>
+            <div class="m-value" id="ds-symperiod">—</div>
+          </div>
+          <div class="metric">
+            <div class="m-label">LDPC CWs / Symbol</div>
+            <div class="m-value" id="ds-ldpc">—</div>
+          </div>
+          <div class="metric">
+            <div class="m-label">CP Overhead</div>
+            <div class="m-value" id="ds-cpoverhead">—</div>
+          </div>
+          <div class="metric">
+            <div class="m-label">Symbol Rate</div>
+            <div class="m-value" id="ds-symrate">—</div>
+          </div>
+        </div>
+
+        <div class="spec-note">
+          <strong>DOCSIS 3.1 reference:</strong> At 192 MHz, 50 kHz spacing, 4096-QAM, 512-sample CP,
+          this model yields ~1.73 Gbps — consistent with the PHY specification after accounting for
+          PLC, continuous pilots, scattered pilots, and NCP overhead.
+          CableLabs' ~1.89 Gbps headline figure omits LDPC and NCP framing overhead.
+        </div>
+      </div><!-- /results-card -->
+    </div><!-- /calc-grid -->
+  </div><!-- /panel-ofdm -->
+
+  <!-- ══════════════════════════════════════════════════════════
+       OFDMA UPSTREAM PANEL
+  ══════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-ofdma" role="tabpanel" aria-labelledby="tab-ofdma">
+    <button class="btn-reset" onclick="resetOfdma()" title="Restore DOCSIS 3.1 default values">
+      ↺ DOCSIS 3.1 Defaults
+    </button>
+
+    <div class="calc-grid">
+      <!-- Inputs -->
+      <div class="card">
+        <div class="card-title">Channel Parameters</div>
+
+        <!-- Channel Width -->
+        <div class="field">
+          <div class="field-label">
+            Channel Width (MHz)
+            <span class="tooltip-btn" tabindex="0" role="button" aria-label="Tooltip">?
+              <span class="tooltip-text">Total OFDMA upstream channel width. DOCSIS 3.1 supports 6.4–96 MHz for low-split, up to 684 MHz for extended high-split. Common deployments: 48 or 96 MHz. [CM-SP-PHYv3.1 §8.1]</span>
+            </span>
+          </div>
+          <input type="number" id="us-width" value="48" min="6.4" max="684" step="0.1"
+                 oninput="calcOfdma()" aria-label="Upstream channel width in MHz" />
+          <div class="error-msg" id="us-width-err">Must be 6.4–684 MHz</div>
+        </div>
+
+        <!-- Subcarrier Spacing -->
+        <div class="field">
+          <div class="field-label">
+            Subcarrier Spacing
+            <span class="tooltip-btn" tabindex="0" role="button" aria-label="Tooltip">?
+              <span class="tooltip-text">OFDMA upstream supports 6.25, 25, or 50 kHz subcarrier spacing. 25 kHz is most common. 6.25 kHz is used for extended reach. [CM-SP-PHYv3.1 §8.4.2]</span>
+            </span>
+          </div>
+          <select id="us-spacing" onchange="calcOfdma()" aria-label="Upstream subcarrier spacing">
+            <option value="6.25">6.25 kHz (extended reach)</option>
+            <option value="25" selected>25 kHz (most common)</option>
+            <option value="50">50 kHz</option>
+          </select>
+        </div>
+
+        <!-- Modulation -->
+        <div class="field">
+          <div class="field-label">
+            Modulation Order
+            <span class="tooltip-btn" tabindex="0" role="button" aria-label="Tooltip">?
+              <span class="tooltip-text">Upstream modulation order per data subcarrier. DOCSIS 3.1 supports QPSK through 4096-QAM upstream. 1024-QAM is a practical limit for many plant conditions.</span>
+            </span>
+          </div>
+          <select id="us-mod" onchange="calcOfdma()" aria-label="Upstream modulation order">
+            <option value="2">QPSK (2 bits/sym)</option>
+            <option value="4">16-QAM (4 bits/sym)</option>
+            <option value="6">64-QAM (6 bits/sym)</option>
+            <option value="8">256-QAM (8 bits/sym)</option>
+            <option value="10" selected>1024-QAM (10 bits/sym)</option>
+            <option value="12">4096-QAM (12 bits/sym)</option>
+          </select>
+        </div>
+
+        <!-- Minislot Size -->
+        <div class="field">
+          <div class="field-label">
+            Minislot Size (subcarriers)
+            <span class="tooltip-btn" tabindex="0" role="button" aria-label="Tooltip">?
+              <span class="tooltip-text">Number of subcarriers per minislot. For 50 kHz spacing: 8 subcarriers/minislot. For 25 kHz spacing: 16 subcarriers/minislot. Minislots are the fundamental upstream allocation unit. [CM-SP-PHYv3.1 §8.5]</span>
+            </span>
+          </div>
+          <select id="us-minislot" onchange="calcOfdma()" aria-label="Minislot size">
+            <option value="8">8 subcarriers (50 kHz spacing)</option>
+            <option value="16" selected>16 subcarriers (25 kHz spacing)</option>
+          </select>
+        </div>
+
+        <!-- Guard Band -->
+        <div class="field">
+          <div class="field-label">
+            Guard Band (MHz)
+            <span class="tooltip-btn" tabindex="0" role="button" aria-label="Tooltip">?
+              <span class="tooltip-text">Guard band at channel edges (both sides combined). Prevents interference with adjacent upstream bands. Typical: 0.4–1 MHz total.</span>
+            </span>
+          </div>
+          <input type="number" id="us-guard" value="0.8" min="0" max="4" step="0.1"
+                 oninput="calcOfdma()" aria-label="Upstream guard band in MHz" />
+          <div class="error-msg" id="us-guard-err">Must be 0–4 MHz</div>
+        </div>
+
+        <!-- Excluded Spectrum -->
+        <div class="field">
+          <div class="field-label">
+            Excluded Spectrum (MHz)
+            <span class="tooltip-btn" tabindex="0" role="button" aria-label="Tooltip">?
+              <span class="tooltip-text">Spectrum notched out within the upstream channel (e.g., for ingress avoidance or narrowband RFI). Range: 0–10 MHz.</span>
+            </span>
+          </div>
+          <input type="number" id="us-exclude" value="0" min="0" max="10" step="0.1"
+                 oninput="calcOfdma()" aria-label="Upstream excluded spectrum" />
+          <div class="error-msg" id="us-exclude-err">Must be 0–10 MHz</div>
+        </div>
+      </div><!-- /card -->
+
+      <!-- Results -->
+      <div class="results-card" id="us-results">
+        <div class="card-title">Upstream Results</div>
+
+        <div class="primary-result">
+          <div class="label">Aggregate Throughput</div>
+          <div class="value" id="us-throughput">—<span class="unit">Gbps</span></div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric">
+            <div class="m-label">Per-Minislot Rate</div>
+            <div class="m-value" id="us-per-minislot">—</div>
+          </div>
+          <div class="metric">
+            <div class="m-label">Minislots / Channel</div>
+            <div class="m-value" id="us-num-minislots">—</div>
+          </div>
+          <div class="metric">
+            <div class="m-label">Spectral Efficiency</div>
+            <div class="m-value" id="us-efficiency">—</div>
+          </div>
+          <div class="metric">
+            <div class="m-label">Symbol Period</div>
+            <div class="m-value" id="us-symperiod">—</div>
+          </div>
+          <div class="metric">
+            <div class="m-label">Total Subcarriers</div>
+            <div class="m-value" id="us-total-scs">—</div>
+          </div>
+          <div class="metric">
+            <div class="m-label">Data Subcarriers</div>
+            <div class="m-value" id="us-data-scs">—</div>
+          </div>
+        </div>
+
+        <div class="spec-note">
+          <strong>DOCSIS 3.1 upstream note:</strong> OFDMA uses minislot-based resource allocation.
+          Throughput shown is the aggregate channel capacity assuming full allocation to a single
+          upstream profile. Actual per-CM throughput depends on scheduling and RF conditions.        </div>
+      </div><!-- /results-card -->
+    </div><!-- /calc-grid -->
+  </div><!-- /panel-ofdma -->
+</main>
+
+<footer>
+  Built by <a href="https://volpefirm.com" target="_blank" rel="noopener">Brady Volpe, MSEE — The Volpe Firm, Inc.</a> &nbsp;·&nbsp;
+  Based on <a href="https://www.cablelabs.com/specifications/CM-SP-PHYv3.1" target="_blank" rel="noopener">DOCSIS 3.1 Physical Layer Specification (CM-SP-PHYv3.1)</a> &nbsp;·&nbsp;
+  <a href="https://github.com/BradyVolpe/ofdmEstimator" target="_blank" rel="noopener">GitHub</a> &nbsp;·&nbsp;
+  MIT License
+</footer>
 
 <script>
-    async function calculateThroughput() {
-        const params = {
-            type: document.getElementById('channelType').value,
-            spectrum: document.getElementById('occupiedSpectrum').value,
-            modOrder: document.getElementById('avgModOrder').value,
-            spacing: document.getElementById('subcarrierSpacing').value,
-            guard: document.getElementById('guardBand').value,
-            exclude: document.getElementById('excludedBand').value
-        };
+/* ==========================================================================
+   DOCSIS 3.1 OFDM/OFDMA Throughput Estimator
+   Math references: CableLabs CM-SP-PHYv3.1 (DOCSIS 3.1 Physical Layer Spec)
+   Author: Brady Volpe, MSEE — The Volpe Firm, Inc. — volpefirm.com
+   ========================================================================== */
 
-        const query = new URLSearchParams(params).toString();
-        try {
-            // Updated backend URL with explicit host and port
-            const response = await fetch(`http://localhost:5001/api/estimate?${query}`);
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
-            }
-            const data = await response.json();
+/* ── Constants (DOCSIS 3.1 PHY spec fixed values) ── */
+const DS_SAMPLING_RATE_MHZ = 204.8;   // §7.4.1: downstream sample rate = 204.8 Msps
+const US_SAMPLING_RATE_MSPS = 102.4;  // §8.4.1: upstream sample rate = 102.4 Msps
 
-            document.getElementById('outputResult').textContent =
-                `${params.type.toUpperCase()} Estimated Throughput: ${data.throughput} Gbps`;
-        } catch (error) {
-            document.getElementById('outputResult').textContent = 'Error estimating throughput. Please try again.';
-            console.error('Fetch error:', error);
-        }
-    }
+// LDPC codeword parameters (CM-SP-PHYv3.1 §7.6.3, Table 7-5)
+// Short block: 16200 bits total, 14216 info bits, code rate ≈ 0.8775
+const LDPC_CW_BITS  = 16200;
+const LDPC_INFO_BITS = 14216;
+const LDPC_PARITY   = 1800;  // Parity bits (LDPC + BCH outer code)
+const LDPC_BCH      = 168;   // BCH parity bits (outer code)
+const LDPC_HDR      = 16;    // Codeword header bits
+
+// NCP (Next Codeword Pointer) parameters (§7.7.1)
+const NCP_BITS_PER_MB = 48;  // NCP miniblock size in bits
+const NCP_MOD_ORDER   = 6;   // NCP modulation: 64-QAM (6 bits/symbol), required by spec
+const NCP_SC_PER_MB   = NCP_BITS_PER_MB / NCP_MOD_ORDER;  // 8 subcarriers per NCP MB
+
+// Pilot density constant M (§7.5.6): used for continuous pilot count formula
+// Formula: N_cont = clamp(ceil(M * BW / 190), 8, 120) + 8
+// The +8 accounts for paired boosted pilots flanking the PLC band
+const PILOT_DENSITY_M = 48;
+
+// Scattered pilot density: 1 scattered pilot per 128 data/pilot subcarriers (§7.5.5)
+const SCATTERED_PILOT_INTERVAL = 128;
+
+// Upstream cyclic prefix (§8.4.4)
+const US_CP_SAMPLES = 192;  // 192 samples / 102.4 Msps = 1.875 µs typical upstream CP
+// Upstream minislot symbol count K (§8.5.2)
+const US_MINISLOT_K = 36;   // 36 symbols per minislot (typical/most common)
+// Upstream grants in profile (used for edge minislot count estimate)
+const US_GRANTS_IN_PROFILE = 38;
+const US_NUM_CONT_LEGACY = 1;  // legacy exclusion gap
+
+/* ── Tab switching ── */
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.id === 'tab-' + tab);
+    b.setAttribute('aria-selected', b.id === 'tab-' + tab ? 'true' : 'false');
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'panel-' + tab);
+  });
+}
+
+/* ── Reset functions ── */
+function resetOfdm() {
+  document.getElementById('ds-width').value   = 192;
+  document.getElementById('ds-spacing').value = 50;
+  document.getElementById('ds-mod').value     = 12;
+  document.getElementById('ds-guard').value   = 1;
+  document.getElementById('ds-exclude').value = 0;
+  document.getElementById('ds-cp').value      = 512;
+  calcOfdm();
+}
+
+function resetOfdma() {
+  document.getElementById('us-width').value    = 48;
+  document.getElementById('us-spacing').value  = 25;
+  document.getElementById('us-mod').value      = 10;
+  document.getElementById('us-minislot').value = 16;
+  document.getElementById('us-guard').value    = 0.8;
+  document.getElementById('us-exclude').value  = 0;
+  calcOfdma();
+}
+
+/* ── Validation helpers ── */
+function showErr(id, msg, show) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.textContent = msg;
+    el.classList.toggle('visible', show);
+  }
+}
+
+function markInput(id, error) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('error', error);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   OFDM DOWNSTREAM CALCULATOR
+   Reference: CM-SP-PHYv3.1 §7 (Downstream OFDM Physical Layer)
+   ────────────────────────────────────────────────────────────── */
+function calcOfdm() {
+  // Read inputs
+  const channelMHz  = parseFloat(document.getElementById('ds-width').value);
+  const spacingKHz  = parseInt(document.getElementById('ds-spacing').value);
+  const modOrder    = parseInt(document.getElementById('ds-mod').value);
+  const guardMHz    = parseFloat(document.getElementById('ds-guard').value);
+  const excludeMHz  = parseFloat(document.getElementById('ds-exclude').value);
+  const cpSamples   = parseInt(document.getElementById('ds-cp').value);
+
+  // Validate
+  let valid = true;
+  if (isNaN(channelMHz) || channelMHz < 24 || channelMHz > 192) {
+    showErr('ds-width-err', 'Must be 24–192 MHz', true);
+    markInput('ds-width', true);
+    valid = false;
+  } else {
+    showErr('ds-width-err', '', false);
+    markInput('ds-width', false);
+  }
+  if (isNaN(guardMHz) || guardMHz < 0 || guardMHz > 4) {
+    showErr('ds-guard-err', 'Must be 0–4 MHz', true);
+    markInput('ds-guard', true);
+    valid = false;
+  } else {
+    showErr('ds-guard-err', '', false);
+    markInput('ds-guard', false);
+  }
+  if (isNaN(excludeMHz) || excludeMHz < 0 || excludeMHz > 20) {
+    showErr('ds-exclude-err', 'Must be 0–20 MHz', true);
+    markInput('ds-exclude', true);
+    valid = false;
+  } else {
+    showErr('ds-exclude-err', '', false);
+    markInput('ds-exclude', false);
+  }
+
+  if (!valid || (guardMHz + excludeMHz) >= channelMHz) {
+    displayOfdmResults(null);
+    return;
+  }
+
+  /* ── Symbol timing (§7.4.2, §7.4.4) ── */
+  // Symbol period = 1 / subcarrier_spacing
+  // 50 kHz → T_sym = 20 µs; 25 kHz → T_sym = 40 µs
+  const symPeriodUsec   = 1000.0 / spacingKHz;
+  // CP duration: CP_samples / sampling_rate_MHz  [µs]
+  const cpUsec          = cpSamples / DS_SAMPLING_RATE_MHZ;
+  // Total symbol period including CP
+  const totalSymUsec    = symPeriodUsec + cpUsec;
+  // Symbol efficiency = useful time / total time
+  const symEfficiency   = symPeriodUsec / totalSymUsec;
+
+  /* ── Subcarrier counts (§7.4.2, §7.5) ── */
+  // Active spectrum = channel width minus guard band and exclusion notches
+  const activeMHz = channelMHz - guardMHz - excludeMHz;
+  // Total modulated subcarriers in active bandwidth
+  const modulatedSCs = activeMHz * 1000.0 / spacingKHz;
+
+  // PLC (Physical Layer Link Channel) subcarriers (§7.5.3)
+  // 50 kHz → 8 PLC SCs; 25 kHz → 16 PLC SCs
+  const plcSCs = spacingKHz === 50 ? 8 : 16;
+
+  // Continuous pilots (§7.5.6): distributed reference pilots for phase tracking
+  // Formula from spec: N_cont = clamp(ceil(M × BW_occ / 190), 8, 120) + 8
+  //   M=48 is the pilot density constant
+  //   +8 accounts for excluded subcarriers flanking the PLC band
+  const contPilotsBasic = Math.ceil(PILOT_DENSITY_M * channelMHz / 190);
+  const contPilots      = Math.min(Math.max(8, contPilotsBasic), 120) + 8;
+
+  // Scattered pilots (§7.5.5): 1 per every 128 subcarriers for channel estimation
+  const scatteredPilots = Math.ceil((modulatedSCs - plcSCs) / SCATTERED_PILOT_INTERVAL);
+
+  // Effective data subcarriers = modulated - overhead
+  // Note: NUM_FFT_BLOCKS = 1 (interleave depth 1, most common deployment)
+  const effSCs = modulatedSCs - plcSCs - contPilots - scatteredPilots;
+
+  if (effSCs <= 0) {
+    displayOfdmResults(null);
+    return;
+  }
+
+  /* ── LDPC + NCP framing (§7.6, §7.7) ── */
+  // Bits available in one OFDM symbol across all data subcarriers
+  const rawBitsPerSym = effSCs * modOrder;
+
+  // Full LDPC codewords that fit in one symbol
+  const numFullCW = Math.floor(rawBitsPerSym / LDPC_CW_BITS);
+
+  // NCP miniblocks: one NCP MB per codeword + 1 for the symbol itself
+  // Each NCP MB consumes NCP_SC_PER_MB subcarriers at 64-QAM (§7.7.1)
+  const numNCPMBs = numFullCW + 1;
+
+  // Subcarriers available after NCP overhead
+  const scsAfterNCP = effSCs - (numNCPMBs + 1) * NCP_SC_PER_MB;
+  const bitsAfterNCP = scsAfterNCP * modOrder;
+
+  // Remaining bits after full codewords (for shortened final codeword)
+  const remainingBits = bitsAfterNCP - LDPC_CW_BITS * numFullCW;
+
+  // Shortened codeword: if remaining bits exceed the parity overhead of a full CW,
+  // the leftover can carry information bits.
+  // Overhead of shortened CW: total parity overhead (LDPC parity - BCH parity - CW header)
+  // See CM-SP-PHYv3.1 §7.6.3 for shortened codeword construction
+  const shortCWOverhead = LDPC_PARITY - LDPC_BCH - LDPC_HDR;  // = 1616 bits
+  let shortCWData = 0;
+  if (remainingBits > 0) {
+    shortCWData = Math.max(0, remainingBits - shortCWOverhead);
+  }
+
+  // Total information bits delivered per OFDM symbol
+  const totalInfoBits = numFullCW * LDPC_INFO_BITS + shortCWData;
+
+  // Throughput [Gbps] = info_bits / (symbol_period_µs × 1000)
+  // (division by 1000 converts µs denominator → Gbps units)
+  const throughputGbps = totalInfoBits / (totalSymUsec * 1000.0);
+
+  // Spectral efficiency [bits/Hz]
+  const specEfficiency = throughputGbps * 1e3 / channelMHz;
+
+  displayOfdmResults({
+    throughputGbps,
+    specEfficiency,
+    effSCs,
+    totalSymUsec,
+    numFullCW,
+    symEfficiency,
+  });
+}
+
+function displayOfdmResults(r) {
+  if (!r) {
+    ['ds-throughput','ds-efficiency','ds-subcarriers','ds-symperiod','ds-ldpc','ds-cpoverhead','ds-symrate'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '—';
+    });
+    const tp = document.getElementById('ds-throughput');
+    if (tp) tp.innerHTML = '—<span class="unit">Gbps</span>';
+    return;
+  }
+  document.getElementById('ds-throughput').innerHTML  = r.throughputGbps.toFixed(4) + '<span class="unit">Gbps</span>';
+  document.getElementById('ds-efficiency').textContent = r.specEfficiency.toFixed(3) + ' b/Hz';
+  document.getElementById('ds-subcarriers').textContent = Math.round(r.effSCs).toLocaleString();
+  document.getElementById('ds-symperiod').textContent  = r.totalSymUsec.toFixed(3) + ' µs';
+  document.getElementById('ds-ldpc').textContent       = r.numFullCW.toLocaleString() + ' + 1';
+  document.getElementById('ds-cpoverhead').textContent = ((1 - r.symEfficiency) * 100).toFixed(1) + '%';
+  document.getElementById('ds-symrate').textContent    = (1e6 / r.totalSymUsec / 1000).toFixed(1) + ' ksym/s';
+}
+
+/* ──────────────────────────────────────────────────────────────
+   OFDMA UPSTREAM CALCULATOR
+   Reference: CM-SP-PHYv3.1 §8 (Upstream OFDMA Physical Layer)
+   ────────────────────────────────────────────────────────────── */
+function calcOfdma() {
+  // Read inputs
+  const channelMHz   = parseFloat(document.getElementById('us-width').value);
+  const spacingKHz   = parseFloat(document.getElementById('us-spacing').value);
+  const modOrder     = parseInt(document.getElementById('us-mod').value);
+  const minislotSCs  = parseInt(document.getElementById('us-minislot').value);
+  const guardMHz     = parseFloat(document.getElementById('us-guard').value);
+  const excludeMHz   = parseFloat(document.getElementById('us-exclude').value);
+
+  // Validate
+  let valid = true;
+  if (isNaN(channelMHz) || channelMHz < 6.4 || channelMHz > 684) {
+    showErr('us-width-err', 'Must be 6.4–684 MHz', true);
+    markInput('us-width', true);
+    valid = false;
+  } else {
+    showErr('us-width-err', '', false);
+    markInput('us-width', false);
+  }
+  if (isNaN(guardMHz) || guardMHz < 0 || guardMHz > 4) {
+    showErr('us-guard-err', 'Must be 0–4 MHz', true);
+    markInput('us-guard', true);
+    valid = false;
+  } else {
+    showErr('us-guard-err', '', false);
+    markInput('us-guard', false);
+  }
+  if (isNaN(excludeMHz) || excludeMHz < 0 || excludeMHz > 10) {
+    showErr('us-exclude-err', 'Must be 0–10 MHz', true);
+    markInput('us-exclude', true);
+    valid = false;
+  } else {
+    showErr('us-exclude-err', '', false);
+    markInput('us-exclude', false);
+  }
+
+  if (!valid || (guardMHz + excludeMHz) >= channelMHz) {
+    displayOfdmaResults(null);
+    return;
+  }
+
+  /* ── Symbol timing (§8.4.2, §8.4.4) ── */
+  // Upstream symbol period = 1 / subcarrier_spacing
+  const symPeriodUsec = 1000.0 / spacingKHz;
+  // Upstream CP: US_CP_SAMPLES / US_SAMPLING_RATE_MSPS
+  const cpUsec        = US_CP_SAMPLES / US_SAMPLING_RATE_MSPS;  // 1.875 µs
+  const totalSymUsec  = symPeriodUsec + cpUsec;
+
+  /* ── Subcarrier counts (§8.4.2, §8.5) ── */
+  // Total subcarriers in channel bandwidth
+  const totalSCs = channelMHz * 1000.0 / spacingKHz;
+
+  // Excluded subcarriers (guard bands + exclusion notches)
+  const excludedSCs = (guardMHz + excludeMHz) * 1000.0 / spacingKHz;
+
+  // Active signal subcarriers
+  const activeSCs = totalSCs - excludedSCs;
+
+  if (activeSCs <= 0) {
+    displayOfdmaResults(null);
+    return;
+  }
+
+  /* ── Minislot calculation (§8.5.2) ── */
+  // Total minislots = floor(activeSCs / Q) where Q = SCs per minislot
+  // Q = 8 for 50 kHz, 16 for 25 kHz; user can override
+  const Q = minislotSCs;
+  const rawMinislots = Math.floor(activeSCs / Q);
+
+  // Minislot efficiency adjustment for exclusion gaps
+  // Each exclusion gap (legacy bands, NBI) reduces usable minislots by ~4 SCs worth
+  const numExclGaps = US_NUM_CONT_LEGACY;  // 1 legacy transition exclusion
+  const minislotEff = activeSCs > 0 ? (activeSCs - numExclGaps * 4.0) / activeSCs : 0;
+  const numMinislots = Math.round(minislotEff * rawMinislots);
+
+  if (numMinislots <= 0) {
+    displayOfdmaResults(null);
+    return;
+  }
+
+  /* ── Pilot overhead per minislot (§8.5.4, Table 8-7) ── */
+  // For a simplified but accurate model, we use a representative pilot overhead.
+  // DOCSIS 3.1 defines 28 minislot patterns with varying pilot densities.
+  // For a "typical" upstream profile using pattern P4 (50 kHz) or P11 (25 kHz):
+  //   - P4 (50 kHz, Q=8): 16 primary + 2 secondary pilots per K symbols
+  //   - P11 (25 kHz, Q=16): 16 primary + 2 secondary pilots per K symbols
+  // Data SCs per minislot = K*Q - pilots_per_K_symbols
+  // Using K=36 symbols per minislot:
+  const K = US_MINISLOT_K;
+  let pilotsPerK, cpPilotsPerK;
+  if (spacingKHz === 6.25) {
+    // 6.25 kHz: Q=32 per minislot, pattern P4-equivalent
+    pilotsPerK   = 16;
+    cpPilotsPerK = 2;
+  } else if (spacingKHz === 25) {
+    // 25 kHz: Q=16, use pattern P11 (moderate pilot density)
+    pilotsPerK   = 16;
+    cpPilotsPerK = 2;
+  } else {
+    // 50 kHz: Q=8, use pattern P4
+    pilotsPerK   = 16;
+    cpPilotsPerK = 2;
+  }
+  const dataSCsPerMinislot = K * Q - pilotsPerK - cpPilotsPerK;
+  const bitsPerMinislot    = dataSCsPerMinislot * modOrder;
+
+  /* ── Throughput (§8.5.2) ── */
+  // Profile rate [bps] = total_bits / (K × symbol_period)
+  // Total bits = numMinislots × bitsPerMinislot
+  const totalBits = numMinislots * bitsPerMinislot;
+  // Note: bitsPerMinislot already spans K symbols, so time = K × totalSymUsec
+  const profileRateMbps = totalBits / (K * totalSymUsec);  // Mbps
+  const throughputGbps  = profileRateMbps / 1000.0;
+
+  // Per-minislot throughput
+  const perMinislotMbps = bitsPerMinislot / (K * totalSymUsec);  // Mbps
+
+  // Spectral efficiency
+  const specEfficiency = profileRateMbps / channelMHz;  // bits/Hz
+
+  displayOfdmaResults({
+    throughputGbps,
+    perMinislotMbps,
+    numMinislots,
+    specEfficiency,
+    totalSymUsec,
+    totalSCs,
+    activeSCs: activeSCs - numExclGaps * 4,
+  });
+}
+
+function displayOfdmaResults(r) {
+  if (!r) {
+    ['us-throughput','us-per-minislot','us-num-minislots','us-efficiency','us-symperiod','us-total-scs','us-data-scs'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '—';
+    });
+    const tp = document.getElementById('us-throughput');
+    if (tp) tp.innerHTML = '—<span class="unit">Gbps</span>';
+    return;
+  }
+  document.getElementById('us-throughput').innerHTML    = r.throughputGbps.toFixed(4) + '<span class="unit">Gbps</span>';
+  document.getElementById('us-per-minislot').textContent = r.perMinislotMbps.toFixed(2) + ' Mbps';
+  document.getElementById('us-num-minislots').textContent = Math.round(r.numMinislots).toLocaleString();
+  document.getElementById('us-efficiency').textContent  = r.specEfficiency.toFixed(3) + ' b/Hz';
+  document.getElementById('us-symperiod').textContent   = r.totalSymUsec.toFixed(3) + ' µs';
+  document.getElementById('us-total-scs').textContent   = Math.round(r.totalSCs).toLocaleString();
+  document.getElementById('us-data-scs').textContent    = Math.round(r.activeSCs).toLocaleString();
+}
+
+/* ── Initial calculation on page load ── */
+window.addEventListener('DOMContentLoaded', function() {
+  calcOfdm();
+  calcOfdma();
+});
 </script>
-
 </body>
 </html>
